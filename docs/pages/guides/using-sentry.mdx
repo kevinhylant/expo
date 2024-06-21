@@ -51,7 +51,7 @@ Go to the [Developer Settings > Auth Tokens](https://sentry.io/settings/) page a
 
 </Step>
 
-Once you have each of these: **organization slug**, **project name**, **DSN**, and **auth token**, you're all set to proceed.
+Once you have each of these: **organization slug**, **project slug**, **DSN**, and **auth token**, you're all set to proceed.
 
 </Step>
 
@@ -321,7 +321,7 @@ Dashboard. Take note of your **organization slug**, **project name**, and **`DSN
 them later:
 
 - **organization slug** is available in your **Organization settings** tab
-- **project name** is available in your project's **Settings** > **Projects** tab (find it in the list)
+- **project slug** is available in your project's **Settings** > **Projects** tab (find it in the list)
 - **`DSN`** is available in your project's **Settings** > **Projects** > **Project name** > **Client Keys
   (DSN)** tab.
 
@@ -335,7 +335,7 @@ Go to the [Sentry API section](https://sentry.io/settings/account/api/auth-token
 
 </Step>
 
-Once you have each of these: organization slug, project name, DSN, and auth token, you're all set!
+Once you have each of these: organization slug, project slug, DSN, and auth token, you're all set!
 
 </Step>
 
@@ -431,7 +431,7 @@ Add `expo.hooks` property to your project's **app.json** or **app.config.js** fi
           "file": "sentry-expo/upload-sourcemaps",
           "config": {
             "organization": "sentry org slug, or use the `SENTRY_ORG` environment variable",
-            "project": "sentry project name, or use the `SENTRY_PROJECT` environment variable"
+            "project": "sentry project slug, or use the `SENTRY_PROJECT` environment variable"
           }
         }
       ]
