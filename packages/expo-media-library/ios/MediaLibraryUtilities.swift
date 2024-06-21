@@ -344,8 +344,6 @@ func assetTypeExtension(for fileExtension: String) -> PHAssetMediaType {
 func getAssetsWithAfter(options: AssetWithOptions, collection: PHAssetCollection?, promise: Promise) {
   let fetchOptions = PHFetchOptions()
   var predicates: [NSPredicate] = []
-  var response = [String: Any?]()
-  var assets: [[String: Any?]] = []
 
   var cursor: PHAsset?
   if let after = options.after {
@@ -409,19 +407,38 @@ func getAssetsWithAfter(options: AssetWithOptions, collection: PHAssetCollection
     fetchResult = PHAsset.fetchAssets(with: fetchOptions)
   }
 
-  var cursorIndex: Int
-  if let cursor {
-    cursorIndex = fetchResult.index(of: cursor)
-  } else {
-    cursorIndex = NSNotFound
+  let resultingAssets = getAssets(fetchResult: fetchResult, cursor: cursor, sortDescriptors: fetchOptions.sortDescriptors, numOfItems: options.first)
+
+  let lastAsset = resultingAssets.assets.last
+
+  let response: [String: Any?] = [
+    "assets": resultingAssets.assets,
+    "endCursor": lastAsset?["id"] ?? options.after,
+    "hasNextPage": resultingAssets.hasNextPage,
+    "totalCount": resultingAssets.totalCount
+  ]
+  promise.resolve(response)
+}
+
+func getAssets(fetchResult: PHFetchResult<PHAsset>, cursor: PHAsset?, sortDescriptors: [NSSortDescriptor]?, numOfItems: Int) -> GetAssetsResponse {
+  let totalCount = fetchResult.count
+  if (totalCount == 0) {
+    return GetAssetsResponse(assets: [], totalCount: totalCount, hasNextPage: false)
+  }
+  var cursorIndex: Int {
+    if let cursor {
+      return fetchResult.index(of: cursor)
+    } else {
+      return NSNotFound
+    }
   }
 
-  let totalCount = fetchResult.count
+  var assets: [[String: Any?]] = []
   var hasNextPage: Bool
 
-  if fetchOptions.sortDescriptors?.isEmpty == true {
+  if sortDescriptors?.isEmpty == true {
     let startIndex = max(cursorIndex == NSNotFound ? totalCount - 1 : cursorIndex - 1, -1)
-    let endIndex = max(startIndex - options.first + 1, 0)
+    let endIndex = max(startIndex - numOfItems + 1, 0)
 
     for i in (endIndex...startIndex).reversed() {
       let asset = fetchResult.object(at: i)
@@ -433,7 +450,7 @@ func getAssetsWithAfter(options: AssetWithOptions, collection: PHAssetCollection
     hasNextPage = endIndex > 0
   } else {
     let startIndex = cursorIndex == NSNotFound ? 0 : cursorIndex + 1
-    let endIndex = min(startIndex + options.first, totalCount)
+    let endIndex = min(startIndex + numOfItems, totalCount)
 
     for index in startIndex..<endIndex {
       let asset = fetchResult.object(at: index)
@@ -444,15 +461,7 @@ func getAssetsWithAfter(options: AssetWithOptions, collection: PHAssetCollection
 
     hasNextPage = endIndex < totalCount
   }
-
-  let lastAsset = assets.last
-
-  response["assets"] = assets
-  response["endCursor"] = lastAsset != nil ? lastAsset?["id"] : options.after
-  response["hasNextPage"] = hasNextPage
-  response["totalCount"] = totalCount
-
-  promise.resolve(response)
+  return GetAssetsResponse(assets: assets, totalCount: totalCount, hasNextPage: hasNextPage)
 }
 
 func prepareSortDescriptors(sortBy: [String]) throws -> [NSSortDescriptor] {
